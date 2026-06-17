@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VCF Oluşturucu</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --border: #2a2a3d;
+    --accent: #7c3aed;
+    --accent2: #06b6d4;
+    --accent3: #f59e0b;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --success: #10b981;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 20px;
+    background-image: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(124,58,237,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 30% at 80% 80%, rgba(6,182,212,0.08) 0%, transparent 50%);
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  header .badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 30%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  header p {
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+
+  .section {
+    margin-bottom: 28px;
+  }
+
+  .section-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .field-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .field-grid.two-col {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  @media (max-width: 500px) {
+    .field-grid.two-col { grid-template-columns: 1fr; }
+  }
+
+  .field {
+    position: relative;
+  }
+
+  .field-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  input, textarea {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 13px 14px 13px 42px;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: var(--muted);
+  }
+
+  input:focus, textarea:focus {
+    border-color: var(--accent);
+    background: #1e1e2e;
+    box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+    padding-left: 42px;
+    padding-top: 13px;
+  }
+
+  .btn-generate {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--accent) 0%, #9333ea 50%, var(--accent2) 100%);
+    background-size: 200% 200%;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-generate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(124,58,237,0.4);
+    background-position: right center;
+  }
+
+  .btn-generate:active { transform: translateY(0); }
+
+  .output-box {
+    display: none;
+    margin-top: 32px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .output-box.show { display: block; animation: fadeUp 0.4s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .output-header {
+    background: var(--surface);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .output-header span {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--success);
+  }
+
+  .output-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-small {
+    padding: 7px 16px;
+    border-radius: 7px;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-copy {
+    background: var(--border);
+    color: var(--text);
+  }
+
+  .btn-copy:hover { background: var(--accent); color: white; }
+
+  .btn-download {
+    background: var(--success);
+    color: white;
+  }
+
+  .btn-download:hover { background: #059669; }
+
+  .output-content {
+    padding: 20px;
+    font-size: 12px;
+    line-height: 1.8;
+    color: #a0a0c0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+  .output-content::-webkit-scrollbar { width: 4px; }
+  .output-content::-webkit-scrollbar-track { background: transparent; }
+  .output-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .copied-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--success);
+    color: white;
+    padding: 12px 28px;
+    border-radius: 30px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    transition: transform 0.3s;
+    z-index: 999;
+  }
+
+  .copied-toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="badge">vCard Generator</div>
+    <h1>VCF Oluşturucu</h1>
+    <p>Tüm alanları doldurun, VCF dosyanız hazır olsun</p>
+  </header>
+
+  <!-- KİŞİSEL BİLGİLER -->
+  <div class="section">
+    <div class="section-label">Kişisel Bilgiler</div>
+    <div class="field-grid two-col">
+      <div class="field">
+        <span class="field-icon">👤</span>
+        <input type="text" id="ad" placeholder="Ad">
+      </div>
+      <div class="field">
+        <span class="field-icon">👤</span>
+        <input type="text" id="soyad" placeholder="Soyad">
+      </div>
+    </div>
+    <div class="field-grid" style="margin-top:12px">
+      <div class="field">
+        <span class="field-icon">🏢</span>
+        <input type="text" id="sirket" placeholder="Şirket / Firma Adı">
+      </div>
+      <div class="field" style="margin-top:12px">
+        <span class="field-icon">💼</span>
+        <input type="text" id="unvan" placeholder="Unvan / Pozisyon">
+      </div>
+    </div>
+  </div>
+
+  <!-- İLETİŞİM -->
+  <div class="section">
+    <div class="section-label">İletişim</div>
+    <div class="field-grid">
+      <div class="field">
+        <span class="field-icon">📞</span>
+        <input type="tel" id="telefon" placeholder="Telefon (örn: +90 555 123 45 67)">
+      </div>
+      <div class="field">
+        <span class="field-icon">📱</span>
+        <input type="tel" id="telefon2" placeholder="2. Telefon (opsiyonel)">
+      </div>
+      <div class="field">
+        <span class="field-icon">✉️</span>
+        <input type="email" id="email" placeholder="E-posta">
+      </div>
+      <div class="field">
+        <span class="field-icon">🌐</span>
+        <input type="url" id="website" placeholder="Web sitesi (https://...)">
+      </div>
+    </div>
+  </div>
+
+  <!-- ADRES & HARİTA -->
+  <div class="section">
+    <div class="section-label">Adres & Harita</div>
+    <div class="field-grid">
+      <div class="field">
+        <span class="field-icon">📍</span>
+        <textarea id="adres" placeholder="Açık adres (sokak, mahalle, ilçe, şehir)"></textarea>
+      </div>
+      <div class="field">
+        <span class="field-icon">🗺️</span>
+        <input type="url" id="maps" placeholder="Google Maps linki (https://maps.app.goo.gl/...)">
+      </div>
+    </div>
+  </div>
+
+  <!-- SOSYAL MEDYA -->
+  <div class="section">
+    <div class="section-label">Sosyal Medya</div>
+    <div class="field-grid">
+      <div class="field">
+        <span class="field-icon">📸</span>
+        <input type="text" id="instagram" placeholder="Instagram (https://instagram.com/...)">
+      </div>
+      <div class="field">
+        <span class="field-icon">📘</span>
+        <input type="text" id="facebook" placeholder="Facebook (https://facebook.com/...)">
+      </div>
+      <div class="field">
+        <span class="field-icon">▶️</span>
+        <input type="text" id="youtube" placeholder="YouTube (https://youtube.com/@...)">
+      </div>
+      <div class="field">
+        <span class="field-icon">💼</span>
+        <input type="text" id="linkedin" placeholder="LinkedIn (https://linkedin.com/in/...)">
+      </div>
+      <div class="field">
+        <span class="field-icon">💬</span>
+        <input type="text" id="whatsapp" placeholder="WhatsApp numarası (+90 555 123 45 67)">
+      </div>
+      <div class="field">
+        <span class="field-icon">🐦</span>
+        <input type="text" id="twitter" placeholder="X / Twitter (https://x.com/...)">
+      </div>
+    </div>
+  </div>
+
+  <!-- NOT -->
+  <div class="section">
+    <div class="section-label">Not</div>
+    <div class="field">
+      <span class="field-icon">📝</span>
+      <textarea id="not" placeholder="Eklemek istediğiniz not (opsiyonel)"></textarea>
+    </div>
+  </div>
+
+  <button class="btn-generate" onclick="generateVCF()">⚡ VCF Oluştur</button>
+
+  <div class="output-box" id="outputBox">
+    <div class="output-header">
+      <span>✓ VCF Hazır</span>
+      <div class="output-actions">
+        <button class="btn-small btn-copy" onclick="copyVCF()">Kopyala</button>
+        <button class="btn-small btn-download" onclick="downloadVCF()">İndir .vcf</button>
+      </div>
+    </div>
+    <div class="output-content" id="outputContent"></div>
+  </div>
+</div>
+
+<div class="copied-toast" id="toast">✓ Kopyalandı!</div>
+
+<script>
+let vcfContent = '';
+
+function val(id) {
+  return document.getElementById(id).value.trim();
+}
+
+function generateVCF() {
+  const ad = val('ad');
+  const soyad = val('soyad');
+
+  if (!ad && !soyad) {
+    alert('Lütfen en az ad veya soyad girin.');
+    return;
+  }
+
+  let lines = [];
+  lines.push('BEGIN:VCARD');
+  lines.push('VERSION:3.0');
+  lines.push(`N:${soyad};${ad};;;`);
+  lines.push(`FN:${ad} ${soyad}`.trim());
+
+  if (val('sirket')) lines.push(`ORG:${val('sirket')}`);
+  if (val('unvan')) lines.push(`TITLE:${val('unvan')}`);
+  if (val('telefon')) lines.push(`TEL;TYPE=CELL:${val('telefon')}`);
+  if (val('telefon2')) lines.push(`TEL;TYPE=WORK:${val('telefon2')}`);
+  if (val('email')) lines.push(`EMAIL:${val('email')}`);
+  if (val('website')) lines.push(`URL:${val('website')}`);
+
+  if (val('adres')) {
+    const adres = val('adres').replace(/\n/g, ' ');
+    lines.push(`ADR;TYPE=WORK:;;${adres};;;;`);
+  }
+
+  // Google Maps
+  if (val('maps')) lines.push(`URL;TYPE=Google Maps:${val('maps')}`);
+
+  // Sosyal medya
+  if (val('instagram')) lines.push(`X-SOCIALPROFILE;TYPE=instagram:${val('instagram')}`);
+  if (val('facebook')) lines.push(`X-SOCIALPROFILE;TYPE=facebook:${val('facebook')}`);
+  if (val('youtube')) lines.push(`X-SOCIALPROFILE;TYPE=youtube:${val('youtube')}`);
+  if (val('linkedin')) lines.push(`X-SOCIALPROFILE;TYPE=linkedin:${val('linkedin')}`);
+  if (val('twitter')) lines.push(`X-SOCIALPROFILE;TYPE=twitter:${val('twitter')}`);
+  if (val('whatsapp')) lines.push(`X-WHATSAPP:${val('whatsapp')}`);
+
+  if (val('not')) lines.push(`NOTE:${val('not')}`);
+
+  lines.push('END:VCARD');
+
+  vcfContent = lines.join('\r\n');
+
+  document.getElementById('outputContent').textContent = vcfContent;
+  const box = document.getElementById('outputBox');
+  box.classList.add('show');
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function copyVCF() {
+  navigator.clipboard.writeText(vcfContent).then(() => {
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+  });
+}
+
+function downloadVCF() {
+  const ad = val('ad') || 'kisi';
+  const soyad = val('soyad') || '';
+  const dosyaAdi = `${ad}${soyad ? '_' + soyad : ''}.vcf`;
+  const blob = new Blob([vcfContent], { type: 'text/vcard;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = dosyaAdi;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
